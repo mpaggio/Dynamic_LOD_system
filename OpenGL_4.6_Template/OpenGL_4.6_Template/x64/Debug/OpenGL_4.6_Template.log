@@ -1,0 +1,27 @@
+﻿  glad.c
+  bufferHandler.cpp
+  geometryHandler.cpp
+  guiHandler.cpp
+  imgui.cpp
+  imgui_demo.cpp
+  imgui_draw.cpp
+  imgui_impl_glfw.cpp
+  imgui_impl_opengl3.cpp
+  imgui_tables.cpp
+  imgui_widgets.cpp
+  interactionHandler.cpp
+  cameraHandler.cpp
+  main.cpp
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(171,25): warning C4244: 'inizializzazione': conversione da 'double' a 'float'. Possibile perdita di dati.
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(220,61): warning C4267: 'argomento': conversione da 'size_t' a 'GLsizei'. Possibile perdita di dati.
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(233,107): warning C4267: 'argomento': conversione da 'size_t' a 'GLsizei'. Possibile perdita di dati.
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(236,57): warning C4267: 'argomento': conversione da 'size_t' a 'GLsizei'. Possibile perdita di dati.
+  modelLoader.cpp
+  noiseHandler.cpp
+  shaderHandler.cpp
+  textureHandler.cpp
+  utilities.cpp
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\utilities.cpp(33,15): warning C4244: 'return': conversione da 'double' a 'float'. Possibile perdita di dati.
+  Generazione del codice in corso...
+LINK : warning LNK4098: la libreria predefinita 'MSVCRT' è in conflitto con l'utilizzo di altre librerie; usare /NODEFAULTLIB:libreria
+  OpenGL_4.6_Template.vcxproj -> C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\x64\Debug\OpenGL_4.6_Template.exe
