@@ -1,5 +1,13 @@
 #include "bufferHandler.h"
 
+extern vector<vec3> positions;
+extern vector<vec3> normals;
+extern vector<vec3> texCoords;
+extern vector<unsigned int> indices;
+
+extern vector<BoneInfo> bone_info; 
+extern vector<VertexBoneData> vertices_to_bones; 
+
 BufferPair INIT_PLANE_BUFFERS(vector<float> planeVertices) {
 	BufferPair pair;
 
@@ -59,61 +67,71 @@ BufferPair INIT_SPHERE_BUFFERS(vector<vec3> instancePositions, vector<vec3> allC
     return pair;
 }
 
-BufferPair INIT_DEER_BUFFERS(vector<Vertex> vertices) {
-    BufferPair pair;
+ModelBufferPair INIT_MODEL_BUFFERS() {
+	ModelBufferPair pair;
 
-    // VAO/VBO per la mesh
+    vector<ivec4> boneIDs(vertices_to_bones.size());
+    vector<vec4> weights(vertices_to_bones.size());
+    for (size_t i = 0; i < vertices_to_bones.size(); i++) {
+        boneIDs[i] = ivec4(
+            vertices_to_bones[i].boneIDs[0],
+            vertices_to_bones[i].boneIDs[1],
+            vertices_to_bones[i].boneIDs[2],
+            vertices_to_bones[i].boneIDs[3]
+        );
+
+        weights[i] = vec4(
+            vertices_to_bones[i].weights[0],
+            vertices_to_bones[i].weights[1],
+            vertices_to_bones[i].weights[2],
+            vertices_to_bones[i].weights[3]
+        );
+    }
+
     glGenVertexArrays(1, &pair.vao);
-    glGenBuffers(1, &pair.vbo);
-
     glBindVertexArray(pair.vao);
-    glBindBuffer(GL_ARRAY_BUFFER, pair.vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STATIC_DRAW);
 
-    // layout (posizione = 0, normal = 1, texcoords = 2)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)0);
-    glEnableVertexAttribArray(0);
+    // Genera i buffer
+    glGenBuffers(1, &pair.vboPositions);
+    glGenBuffers(1, &pair.vboNormals);
+    glGenBuffers(1, &pair.vboTexCoords);
+    glGenBuffers(1, &pair.ebo);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, normal));
-    glEnableVertexAttribArray(1);
+    // POSIZIONI
+    glBindBuffer(GL_ARRAY_BUFFER, pair.vboPositions);
+    glBufferData(GL_ARRAY_BUFFER, positions.size() * sizeof(vec3), positions.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0); // location 0
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
 
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)offsetof(Vertex, texCoords));
-    glEnableVertexAttribArray(2);
+    // NORMALI
+    glBindBuffer(GL_ARRAY_BUFFER, pair.vboNormals);
+    glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(vec3), normals.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(1); // location 1
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
 
-    glVertexAttribIPointer(3, 1, GL_INT, sizeof(Vertex), (void*)offsetof(Vertex, textureIndex));
-    glEnableVertexAttribArray(3);
+    // TEX COORDS
+    glBindBuffer(GL_ARRAY_BUFFER, pair.vboTexCoords);
+    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(vec3), texCoords.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(2); // location 2
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
 
-    glBindVertexArray(0);
+    // BONES: boneIDs (interi)
+    glGenBuffers(1, &pair.vboBoneIDs);
+    glBindBuffer(GL_ARRAY_BUFFER, pair.vboBoneIDs);
+    glBufferData(GL_ARRAY_BUFFER, boneIDs.size() * sizeof(ivec4), boneIDs.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(3); // location 3
+    glVertexAttribIPointer(3, 4, GL_INT, sizeof(ivec4), (void*)0); // IPointer per interi
 
-    return pair;
-}
+    // BONES: weights (float)
+    glGenBuffers(1, &pair.vboBoneWeights);
+    glBindBuffer(GL_ARRAY_BUFFER, pair.vboBoneWeights);
+    glBufferData(GL_ARRAY_BUFFER, weights.size() * sizeof(vec4), weights.data(), GL_STATIC_DRAW);
+    glEnableVertexAttribArray(4); // location 4
+    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(vec4), (void*)0);
 
-BufferPair INIT_SIMPLE_MODEL_BUFFERS(vector<SimpleVertex> vertices) {
-    BufferPair pair;
-
-    // VAO/VBO per la mesh
-    glGenVertexArrays(1, &pair.vao);
-    glGenBuffers(1, &pair.vbo);
-
-    glBindVertexArray(pair.vao);
-    glBindBuffer(GL_ARRAY_BUFFER, pair.vbo);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(SimpleVertex), vertices.data(), GL_STATIC_DRAW);
-
-    // layout (posizione = 0, normal = 1, color = 2, boneIDs = 3, weights = 4)
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)0);
-    glEnableVertexAttribArray(0);
-
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, normal));
-    glEnableVertexAttribArray(1);
-
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, color));
-    glEnableVertexAttribArray(2);
-
-    glVertexAttribIPointer(3, 4, GL_INT, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, boneIDs));
-    glEnableVertexAttribArray(3);
-
-    glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(SimpleVertex), (void*)offsetof(SimpleVertex, weights));
-    glEnableVertexAttribArray(4);
+    // INDICI
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pair.ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
 
     glBindVertexArray(0);
 

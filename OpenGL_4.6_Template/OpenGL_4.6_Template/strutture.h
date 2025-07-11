@@ -1,20 +1,41 @@
 #pragma once
 #include "lib.h"
 
-typedef struct {
-    vec3 position;
-    vec3 normal;
-    vec2 texCoords;
-    int textureIndex;
-} Vertex;
+#define MAX_NUM_BONES_PER_VERTEX 4
+#define ARRAY_SIZE_IN_ELEMENTS(arr) (sizeof(arr) / sizeof((arr)[0]))
+
+struct VertexBoneData {
+    unsigned int boneIDs[MAX_NUM_BONES_PER_VERTEX] = { 0 };
+    float weights[MAX_NUM_BONES_PER_VERTEX] = { 0.0f };
+
+    void addBone(const unsigned int boneID, float boneWeight) {
+        for (int i = 0; i < ARRAY_SIZE_IN_ELEMENTS(boneIDs); i++) {
+            if (weights[i] == 0.0) {
+                boneIDs[i] = boneID;
+                weights[i] = boneWeight;
+                return;
+            }
+        }
+    }
+
+    void normalize() {
+        float total = 0.0f;
+        for (int i = 0; i < MAX_NUM_BONES_PER_VERTEX; i++) {
+            total += weights[i];
+        }
+        if (total > 0.0f) {
+            for (int i = 0; i < MAX_NUM_BONES_PER_VERTEX; i++) {
+                weights[i] /= total;
+            }
+        }
+    }
+
+};
 
 typedef struct {
-    vec3 position;
-    vec3 normal;
-    vec3 color;
-    int boneIDs[4];
-    float weights[4];
-} SimpleVertex;
+    mat4 offsetMatrix; // trasforma dal modello al sistema di riferimento dell'osso
+    mat4 finalTransform; // verrà calcolata a runtime durante l'animazione
+} BoneInfo;
 
 typedef struct {
     vec3 position; // Posizione della camera nello spazio 3D
@@ -37,3 +58,13 @@ typedef struct{
     unsigned int vbo;
     unsigned int centerVBO;
 } BufferPair;
+
+typedef struct {
+    unsigned int vao;
+    unsigned int vboPositions;
+    unsigned int vboNormals;
+    unsigned int vboTexCoords;
+    unsigned int vboBoneIDs;
+    unsigned int vboBoneWeights;
+    unsigned int ebo;
+} ModelBufferPair;

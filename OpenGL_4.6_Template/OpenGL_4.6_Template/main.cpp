@@ -11,8 +11,8 @@
 #include "geometryHandler.h"
 #include "interactionHandler.h"
 
-int height; //Altezza della finestra
-int width; //Larghezza della finestra
+int height = 600; //Altezza della finestra
+int width = 600; //Larghezza della finestra
 float Theta = -90.0f; //Angolo per la rotazione orizzontale
 float Phi = 0.0f; //Angolo per la rotazione verticale
 bool mouseLocked = true;
@@ -20,8 +20,8 @@ bool lineMode = true;
 ViewSetup SetupTelecamera;
 PerspectiveSetup SetupProspettiva;
 
-extern vector<mat4> boneOffsetMatrices;
-
+extern vector<unsigned int> indices;
+extern vector<BoneInfo> bone_info;
 
 int main() {
     int division = 12;
@@ -40,12 +40,13 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6); //Specifica a GLFW che verrà utilizzato OpenGL versione 4.6 (specifica la versione minore)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //Richiede un core profile di OpenGL (che esclude le funzionalità deprecate)
 
-    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor(); // Prendi il monitor principale
-    const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor); // Prendi le modalità video del monitor (risoluzione, refresh rate, ecc)
-    height = mode->height;
-    width = mode->width;
-    GLFWwindow* window = glfwCreateWindow(width, height, "Tessellation Shader", primaryMonitor, nullptr); // Crea la finestra fullscreen con le dimensioni del monitor
-    
+    //GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor(); // Prendi il monitor principale
+    //const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor); // Prendi le modalità video del monitor (risoluzione, refresh rate, ecc)
+    //height = mode->height;
+    //width = mode->width;
+    //GLFWwindow* window = glfwCreateWindow(width, height, "Tessellation Shader", primaryMonitor, nullptr); // Crea la finestra fullscreen con le dimensioni del monitor
+    GLFWwindow* window = glfwCreateWindow(width, height, "Tessellation Shader", nullptr, nullptr);
+
     if (!window) { //Gestione dell'errore
         std::cerr << "Errore nella creazione della finestra GLFW\n";
         glfwTerminate();
@@ -93,9 +94,10 @@ int main() {
     BufferPair spherePair = INIT_SPHERE_BUFFERS(allSphereVertices, allCenters);
 
 
-    //DEER
-    vector<SimpleVertex> catVertices = loadSimpleFBX("Model/BotLowPoly/source/X Bot.fbx");
-    BufferPair catPair = INIT_SIMPLE_MODEL_BUFFERS(catVertices);
+    //MODEL
+    string path = "Model/MageLowPoly/source/mage.fbx";
+    printModelData(path);
+    ModelBufferPair modelPair = INIT_MODEL_BUFFERS();
 
 
     //SHADER PROGRAMS
@@ -230,10 +232,15 @@ int main() {
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(objectModel));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(proj));
-        glUniformMatrix4fv(bonesLoc, boneOffsetMatrices.size(), GL_FALSE, value_ptr(boneOffsetMatrices[0]));
 
-        glBindVertexArray(catPair.vao);
-        glDrawArrays(GL_TRIANGLES, 0, catVertices.size());
+        mat4 boneTransforms[128];
+        for (int i = 0; i < bone_info.size(); i++)
+            boneTransforms[i] = bone_info[i].finalTransform;
+
+        glUniformMatrix4fv(bonesLoc, bone_info.size(), GL_FALSE, value_ptr(boneTransforms[0]));
+
+        glBindVertexArray(modelPair.vao);
+        glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
 
         renderGui();
