@@ -1,8 +1,4 @@
-﻿  bufferHandler.cpp
-  cameraHandler.cpp
-  guiHandler.cpp
-  interactionHandler.cpp
-  main.cpp
+﻿  main.cpp
 C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(173,25): warning C4244: 'inizializzazione': conversione da 'double' a 'float'. Possibile perdita di dati.
 C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(222,61): warning C4267: 'argomento': conversione da 'size_t' a 'GLsizei'. Possibile perdita di dati.
 C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(240,94): warning C4267: 'argomento': conversione da 'size_t' a 'GLsizei'. Possibile perdita di dati.
@@ -14,10 +10,5 @@ C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template
 C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(77,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
 C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(92,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
 C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(133,27): warning C4018: '<': errata corrispondenza tra signed e unsigned
-  noiseHandler.cpp
-  shaderHandler.cpp
-  textureHandler.cpp
-  utilities.cpp
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\utilities.cpp(33,15): warning C4244: 'return': conversione da 'double' a 'float'. Possibile perdita di dati.
   Generazione del codice in corso...
   OpenGL_4.6_Template.vcxproj -> C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\x64\Debug\OpenGL_4.6_Template.exe

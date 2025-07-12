@@ -149,7 +149,7 @@ void printSceneData(const aiScene* scene) {
         v.normalize();
     }
 
-    printf("\n=== DEBUG VERTEX-BONE DATA ===\n");
+    /*printf("\n=== DEBUG VERTEX-BONE DATA ===\n");
     for (int i = 0; i < std::min((int)vertices_to_bones.size(), 10); i++) {
         VertexBoneData& v = vertices_to_bones[i];
         printf("Vertex %d - BIDs: [%d, %d, %d, %d] | Ws: [%.2f, %.2f, %.2f, %.2f] | sum = %.2f\n",
@@ -158,7 +158,7 @@ void printSceneData(const aiScene* scene) {
             v.weights[0], v.weights[1], v.weights[2], v.weights[3],
             v.weights[0] + v.weights[1] + v.weights[2] + v.weights[3]
         );
-    }
+    }*/
 }
 
 void printModelData(string modelPath) {

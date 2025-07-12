@@ -226,7 +226,7 @@ int main() {
         glUseProgram(modelProgram);
 
         mat4 objectModel = mat4(1.0f);
-        objectModel = scale(objectModel, vec3(0.05f));
+        objectModel = scale(objectModel, vec3(0.01f));
         objectModel = translate(objectModel, vec3(3.0f));
         objectModel = rotate(objectModel, radians(180.0f), vec3(0.0f, 1.0f, 0.0f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(objectModel));
