@@ -13,15 +13,20 @@
 
 int height = 600; //Altezza della finestra
 int width = 600; //Larghezza della finestra
+
 float Theta = -90.0f; //Angolo per la rotazione orizzontale
 float Phi = 0.0f; //Angolo per la rotazione verticale
+long long startTimeMillis = 0;
+
 bool mouseLocked = true;
 bool lineMode = true;
+
 ViewSetup SetupTelecamera;
 PerspectiveSetup SetupProspettiva;
 
 extern vector<unsigned int> indices;
 extern vector<BoneInfo> bone_info;
+extern const aiScene* scene;
 
 int main() {
     int division = 12;
@@ -95,8 +100,8 @@ int main() {
 
 
     //MODEL
-    string path = "Model/MageLowPoly/source/mage.fbx";
-    printModelData(path);
+    string path = "Model/Knight/source/Walking.fbx";
+    loadModel(path);
     ModelBufferPair modelPair = INIT_MODEL_BUFFERS();
 
 
@@ -158,10 +163,17 @@ int main() {
 
     //GUI
     initializeGui(window); //Inizializza la finestra di interazione
+
+
+    //TIME
+    startTimeMillis = static_cast<long long>(glfwGetTime() * 1000.0);
     
 
     //MAIN LOOP
     while (!glfwWindowShouldClose(window)) {
+
+        long long currentTimeMillis = static_cast<long long>(glfwGetTime() * 1000.0);
+        float animationTimeSec = ((float)(currentTimeMillis - startTimeMillis)) / 1000.0f;
 
         if (lineMode) {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); //Imposta la modalità Wireframe per vedere le suddivisioni fatte dallo shader
@@ -225,10 +237,17 @@ int main() {
         //MODEL PROGRAM
         glUseProgram(modelProgram);
 
+        //aggiornamento dell'animazione del personaggio (se presente)
+        if (scene && scene->mNumAnimations > 0 && scene->mAnimations[0]) {
+            float ticksPerSecond = scene->mAnimations[0]->mTicksPerSecond != 0 ? scene->mAnimations[0]->mTicksPerSecond : 25.0f; //quanti tick al secondo
+            float timeInTicks = animationTimeSec * ticksPerSecond; //quanti tick sono passati
+            float animationTimeTicks = fmod(timeInTicks, scene->mAnimations[0]->mDuration); //prendo la parte decimale dell'operazione modulo (animazione continua)
+            updateBoneTransforms(animationTimeTicks);
+        }
+
         mat4 objectModel = mat4(1.0f);
-        objectModel = scale(objectModel, vec3(0.01f));
         objectModel = translate(objectModel, vec3(3.0f));
-        objectModel = rotate(objectModel, radians(180.0f), vec3(0.0f, 1.0f, 0.0f));
+        objectModel = scale(objectModel, vec3(0.005f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(objectModel));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(proj));

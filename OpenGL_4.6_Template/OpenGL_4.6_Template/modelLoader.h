@@ -2,4 +2,5 @@
 #include "lib.h"
 #include "strutture.h"
 
-void printModelData(string modelPath);
+void loadModel(string modelPath);
+void updateBoneTransforms(float animationTime);

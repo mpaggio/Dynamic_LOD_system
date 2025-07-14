@@ -1,14 +1,9 @@
-﻿  main.cpp
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(173,25): warning C4244: 'inizializzazione': conversione da 'double' a 'float'. Possibile perdita di dati.
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(222,61): warning C4267: 'argomento': conversione da 'size_t' a 'GLsizei'. Possibile perdita di dati.
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(240,94): warning C4267: 'argomento': conversione da 'size_t' a 'GLsizei'. Possibile perdita di dati.
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(243,72): warning C4267: 'argomento': conversione da 'size_t' a 'GLsizei'. Possibile perdita di dati.
-  modelLoader.cpp
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(30,43): warning C4267: '=': conversione da 'size_t' a 'int'. Possibile perdita di dati.
+﻿  modelLoader.cpp
 C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(49,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(56,27): warning C4018: '<': errata corrispondenza tra signed e unsigned
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(77,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(92,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(133,27): warning C4018: '<': errata corrispondenza tra signed e unsigned
-  Generazione del codice in corso...
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(226,43): warning C4267: '=': conversione da 'size_t' a 'int'. Possibile perdita di dati.
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(245,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(250,27): warning C4018: '<': errata corrispondenza tra signed e unsigned
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(267,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(287,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(326,27): warning C4018: '<': errata corrispondenza tra signed e unsigned
   OpenGL_4.6_Template.vcxproj -> C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\x64\Debug\OpenGL_4.6_Template.exe
