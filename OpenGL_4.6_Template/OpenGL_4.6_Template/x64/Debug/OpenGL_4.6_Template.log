@@ -1,9 +1,8 @@
-﻿  modelLoader.cpp
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(49,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(226,43): warning C4267: '=': conversione da 'size_t' a 'int'. Possibile perdita di dati.
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(245,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(250,27): warning C4018: '<': errata corrispondenza tra signed e unsigned
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(267,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(287,23): warning C4018: '<': errata corrispondenza tra signed e unsigned
-C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\modelLoader.cpp(326,27): warning C4018: '<': errata corrispondenza tra signed e unsigned
+﻿  main.cpp
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(185,25): warning C4244: 'inizializzazione': conversione da 'double' a 'float'. Possibile perdita di dati.
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(234,61): warning C4267: 'argomento': conversione da 'size_t' a 'GLsizei'. Possibile perdita di dati.
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(242,34): warning C4244: 'inizializzazione': conversione da 'double' a 'float'. Possibile perdita di dati.
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(244,38): warning C4244: 'inizializzazione': conversione da 'double' a 'float'. Possibile perdita di dati.
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(259,94): warning C4267: 'argomento': conversione da 'size_t' a 'GLsizei'. Possibile perdita di dati.
+C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\OpenGL_4.6_Template\main.cpp(262,72): warning C4267: 'argomento': conversione da 'size_t' a 'GLsizei'. Possibile perdita di dati.
   OpenGL_4.6_Template.vcxproj -> C:\Marco\UNIVERSITA\Tesi\Progetto_OpenGL\OpenGL_4.6_Template\x64\Debug\OpenGL_4.6_Template.exe

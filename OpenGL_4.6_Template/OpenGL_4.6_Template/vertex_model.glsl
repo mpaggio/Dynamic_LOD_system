@@ -23,9 +23,11 @@ void main() {
         aWeights[3] * bones[aBoneIDs[3]];
 
     vec4 skinnedPos = skinMatrix * vec4(aPos, 1.0);
-
     FragPos = vec3(model * skinnedPos);
-    Normal = normalize(mat3(skinMatrix) * aNormal);
+
+    mat3 normalMatrix = transpose(inverse(mat3(model * skinMatrix)));
+    Normal = normalize(normalMatrix * aNormal);
+
     FragColor = aColor;
 
     gl_Position = proj * view * vec4(FragPos, 1.0);

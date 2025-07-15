@@ -34,17 +34,6 @@ mat4 aiMatrix4x4_to_mat4(const aiMatrix4x4& from) {
     return to;
 }
 
-mat4 aiMatrix4x4_to_mat4_2(const aiMatrix4x4& from) {
-    mat4 to;
-
-    to[0][0] = from.a1; to[0][1] = from.a2; to[0][2] = from.a3; to[0][3] = from.a4;
-    to[1][0] = from.b1; to[1][1] = from.b2; to[1][2] = from.b3; to[1][3] = from.b4;
-    to[2][0] = from.c1; to[2][1] = from.c2; to[2][2] = from.c3; to[2][3] = from.c4;
-    to[3][0] = from.d1; to[3][1] = from.d2; to[3][2] = from.d3; to[3][3] = from.d4;
-
-    return to;
-}
-
 aiNodeAnim* findNodeAnim(const aiAnimation* sceneAnimation, const string nodeName) {
     for (int i = 0; i < sceneAnimation->mNumChannels; i++) {
         aiNodeAnim* nodeAnim = sceneAnimation->mChannels[i];
@@ -161,8 +150,8 @@ void CalcInterpolatedRotation(aiQuaternion& rotation, float animationTimeTickets
     rotation.Normalize();
 }
 
-void readNodeHierarchy(float animationTimeTicks, const aiNode* node, const mat4 parentTransform) {
-    string nodeName = node->mName.C_Str();
+void readNodeHierarchy(float animationTimeTicks, const aiNode* node, const mat4& parentTransform) {
+    string nodeName = node->mName.data;
     aiAnimation* animation = scene->mAnimations[0];
     mat4 nodeTransformation = aiMatrix4x4_to_mat4(node->mTransformation);
     aiNodeAnim* nodeAnimation = findNodeAnim(animation, nodeName);
@@ -269,11 +258,6 @@ void loadSceneData(const aiScene* scene) {
         total_vertices += mesh->mNumVertices;
         total_indices += mesh->mNumFaces * 3;
         total_bones += mesh->mNumBones;
-
-        printf("First vertex: x=%.2f y=%.2f z=%.2f\n",
-            mesh->mVertices[0].x,
-            mesh->mVertices[0].y,
-            mesh->mVertices[0].z);
     }
 
     positions.reserve(total_vertices);
