@@ -8,14 +8,18 @@ vector<vec3> normals;
 vector<vec3> texCoords;
 vector<unsigned int> indices;
 
-vector<BoneInfo> bone_info; //contiene offset matrix e la trasformazione animata finale
+vector<BoneInfo> bone_info_walking; //contiene offset matrix e la trasformazione animata finale (walking)
+vector<BoneInfo> bone_info_standing; //contiene offset e trasformazione animata (standing)
 
 vector<VertexBoneData> vertices_to_bones; //mapping dai vertici alle informazioni delle ossa che li influenzano (mapping inverso)
 vector<int> mesh_vertices; //contiene l'indice iniziale di ogni mesh all'interno dell'array globale dei vertici
-map<string, unsigned int> bone_name_to_index; //mapping dai nomi delle ossa agli indici relativi
+map<string, unsigned int> bone_name_to_index_walking; //mapping dai nomi delle ossa agli indici relativi (walking)
+map<string, unsigned int> bone_name_to_index_standing; //(standing)
 
-Importer printerImporter;
-const aiScene* scene;
+Importer importerWalking;
+Importer importerStanding;
+const aiScene* scene_walking;
+const aiScene* scene_standing;
 
 
 void printMat4(const glm::mat4& mat) {
@@ -150,9 +154,16 @@ void CalcInterpolatedRotation(aiQuaternion& rotation, float animationTimeTickets
     rotation.Normalize();
 }
 
-void readNodeHierarchy(float animationTimeTicks, const aiNode* node, const mat4& parentTransform) {
+void readNodeHierarchy(float animationTimeTicks, const aiNode* node, const mat4& parentTransform, ModelState state) {
     string nodeName = node->mName.data;
-    aiAnimation* animation = scene->mAnimations[0];
+    aiAnimation* animation;
+    if (state == WALKING) {
+        animation = scene_walking->mAnimations[0];
+    }
+    else{
+        animation = scene_standing->mAnimations[0];
+    }
+    
     mat4 nodeTransformation = aiMatrix4x4_to_mat4(node->mTransformation);
     aiNodeAnim* nodeAnimation = findNodeAnim(animation, nodeName);
 
@@ -177,64 +188,81 @@ void readNodeHierarchy(float animationTimeTicks, const aiNode* node, const mat4&
 
     mat4 globalTransform = parentTransform * nodeTransformation;
     
-    if (bone_name_to_index.find(nodeName) != bone_name_to_index.end()) {
-        int boneIndex = bone_name_to_index[nodeName];
-        bone_info[boneIndex].finalTransform = globalInverseTransformation * globalTransform * bone_info[boneIndex].offsetMatrix;
+    if (state == WALKING) {
+        if (bone_name_to_index_walking.find(nodeName) != bone_name_to_index_walking.end()) {
+            int boneIndex = bone_name_to_index_walking[nodeName];
+            bone_info_walking[boneIndex].finalTransform = globalInverseTransformation * globalTransform * bone_info_walking[boneIndex].offsetMatrix;
+        }
     }
+    else {
+        if (bone_name_to_index_standing.find(nodeName) != bone_name_to_index_standing.end()) {
+            int boneIndex = bone_name_to_index_standing[nodeName];
+            bone_info_standing[boneIndex].finalTransform = globalInverseTransformation * globalTransform * bone_info_standing[boneIndex].offsetMatrix;
+        }
+    }
+        
 
     // Ricorsione per i figli
     for (unsigned int i = 0; i < node->mNumChildren; i++) {
-        readNodeHierarchy(animationTimeTicks, node->mChildren[i], globalTransform);
+        readNodeHierarchy(animationTimeTicks, node->mChildren[i], globalTransform, state);
     }
 }
 
-void updateBoneTransforms(float animationTime) {
+void updateBoneTransforms(float animationTime, ModelState state) {
     mat4 identity = mat4(1.0f);
-    readNodeHierarchy(animationTime, scene->mRootNode, identity);
-
-    // Controllo NaN o valori infiniti nelle matrici finalTransform di ogni osso
-    for (size_t i = 0; i < bone_info.size(); ++i) {
-        const mat4& transform = bone_info[i].finalTransform;
-        for (int row = 0; row < 4; ++row) {
-            for (int col = 0; col < 4; ++col) {
-                float val = transform[row][col];
-                if (!std::isfinite(val)) {
-                    std::cerr << "Invalid transform detected in bone " << i
-                        << " at element (" << row << ", " << col << "): " << val << std::endl;
-                }
-            }
-        }
+    if (state == WALKING) {
+        readNodeHierarchy(animationTime, scene_walking->mRootNode, identity, state);
+    }
+    else {
+        readNodeHierarchy(animationTime, scene_standing->mRootNode, identity, state);
     }
 }
 
-int getBoneID(const aiBone* bone) {
+int getBoneID(const aiBone* bone, ModelState state) {
     int boneID = 0;
     string boneName = bone->mName.C_Str(); //recupero il nome dell'osso
 
-    if (bone_name_to_index.find(boneName) == bone_name_to_index.end()) { //se il nome non è stato trovato
-        boneID = bone_name_to_index.size(); //indice della nuova posizione (in fondo)
-        bone_name_to_index[boneName] = boneID; //inserisco nella posizione data l'indice del nuovo osso
+    if (state == WALKING) {
+        if (bone_name_to_index_walking.find(boneName) == bone_name_to_index_walking.end()) { //se il nome non è stato trovato
+            boneID = bone_name_to_index_walking.size(); //indice della nuova posizione (in fondo)
+            bone_name_to_index_walking[boneName] = boneID; //inserisco nella posizione data l'indice del nuovo osso
 
-        // Assicurati che bone_info abbia spazio
-        if (bone_info.size() <= boneID)
-            bone_info.resize(boneID + 1);
-
-        // Salva la offset matrix dell'osso
-        bone_info[boneID].offsetMatrix = aiMatrix4x4_to_mat4(bone->mOffsetMatrix);
-        bone_info[boneID].finalTransform = mat4(1.0f);
+            // Assicurati che bone_info abbia spazio
+            if (bone_info_walking.size() <= boneID)
+                bone_info_walking.resize(boneID + 1);
+            // Salva la offset matrix dell'osso
+            bone_info_walking[boneID].offsetMatrix = aiMatrix4x4_to_mat4(bone->mOffsetMatrix);
+            bone_info_walking[boneID].finalTransform = mat4(1.0f);
+        }
+        else { //se il nome è stato trovato
+            boneID = bone_name_to_index_walking[boneName]; //prendo il suo indice
+        }
     }
-    else { //se il nome è stato trovato
-        boneID = bone_name_to_index[boneName]; //prendo il suo indice
-    }
+    else {
+        if (bone_name_to_index_standing.find(boneName) == bone_name_to_index_standing.end()) { //se il nome non è stato trovato
+            boneID = bone_name_to_index_standing.size(); //indice della nuova posizione (in fondo)
+            bone_name_to_index_standing[boneName] = boneID; //inserisco nella posizione data l'indice del nuovo osso
 
+            // Assicurati che bone_info abbia spazio
+            if (bone_info_standing.size() <= boneID)
+                bone_info_standing.resize(boneID + 1);
+            // Salva la offset matrix dell'osso
+            bone_info_standing[boneID].offsetMatrix = aiMatrix4x4_to_mat4(bone->mOffsetMatrix);
+            bone_info_standing[boneID].finalTransform = mat4(1.0f);
+        }
+        else { //se il nome è stato trovato
+            boneID = bone_name_to_index_standing[boneName]; //prendo il suo indice
+        }
+    }
+    
     return boneID;
 }
 
-void loadMeshBones(const int meshIndex, const aiMesh* mesh) {
+void loadMeshBones(const int meshIndex, const aiMesh* mesh, ModelState state) {
     for (int i = 0; i < mesh->mNumBones; i++) {
         const aiBone* bone = mesh->mBones[i];
         
-        int boneID = getBoneID(bone); //recupero l'ID dell'osso
+        int boneID = getBoneID(bone, state); //recupero l'ID dell'osso
 
         for (int j = 0; j < bone->mNumWeights; j++) {
             const aiVertexWeight& vertexWeight = bone->mWeights[j];
@@ -246,7 +274,7 @@ void loadMeshBones(const int meshIndex, const aiMesh* mesh) {
     }
 }
 
-void loadSceneData(const aiScene* scene) {
+void loadSceneData(const aiScene* scene, ModelState state) {
     int total_vertices = 0;
     int total_indices = 0;
     int total_bones = 0;
@@ -316,7 +344,7 @@ void loadSceneData(const aiScene* scene) {
     
         // Dati ossa
         if (mesh->HasBones()) {
-            loadMeshBones(i, mesh);
+            loadMeshBones(i, mesh, state);
         }
 
         vertex_offset += num_vertices;
@@ -327,25 +355,51 @@ void loadSceneData(const aiScene* scene) {
     }
 }
 
-void loadModel(string modelPath) {
-    scene = printerImporter.ReadFile(
-        modelPath,
-        aiProcess_Triangulate |
-        aiProcess_GenSmoothNormals |
-        aiProcess_JoinIdenticalVertices
-    );
+void loadModel(string modelPath, ModelState state) {
+    aiMatrix4x4 transform;
 
-    if (!scene || !scene->HasMeshes()) {
-        printf("Failed to load model or no meshes found\n");
-        return;
+    if (state == WALKING) {
+        scene_walking = importerWalking.ReadFile(
+            modelPath,
+            aiProcess_Triangulate |
+            aiProcess_GenSmoothNormals |
+            aiProcess_JoinIdenticalVertices
+        );
+
+        if (!scene_walking || !scene_walking->HasMeshes()) {
+            printf("Failed to load model or no meshes found\n");
+            return;
+        }
+
+        if (!scene_walking->HasAnimations()) {
+            printf("Model loaded, but no animations found\n");
+        }
+
+        transform = scene_walking->mRootNode->mTransformation;
+        globalInverseTransformation = inverse(aiMatrix4x4_to_mat4(transform));
+
+        loadSceneData(scene_walking, state);
     }
+    else {
+        scene_standing = importerStanding.ReadFile(
+            modelPath,
+            aiProcess_Triangulate |
+            aiProcess_GenSmoothNormals |
+            aiProcess_JoinIdenticalVertices
+        );
 
-    if (!scene->HasAnimations()) {
-        printf("Model loaded, but no animations found\n");
+        if (!scene_standing || !scene_standing->HasMeshes()) {
+            printf("Failed to load model or no meshes found\n");
+            return;
+        }
+
+        if (!scene_standing->HasAnimations()) {
+            printf("Model loaded, but no animations found\n");
+        }
+
+        transform = scene_standing->mRootNode->mTransformation;
+        globalInverseTransformation = inverse(aiMatrix4x4_to_mat4(transform));
+
+        loadSceneData(scene_standing, state);
     }
-    
-    aiMatrix4x4 transform = scene->mRootNode->mTransformation;
-    globalInverseTransformation = inverse(aiMatrix4x4_to_mat4(transform));
-
-    loadSceneData(scene);
 }

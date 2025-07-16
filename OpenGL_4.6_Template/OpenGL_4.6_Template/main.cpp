@@ -24,15 +24,19 @@ bool lineMode = true;
 ViewSetup SetupTelecamera;
 PerspectiveSetup SetupProspettiva;
 
+pointLight light;
+
 extern vector<unsigned int> indices;
-extern vector<BoneInfo> bone_info;
-extern const aiScene* scene;
+extern vector<BoneInfo> bone_info_walking;
+extern vector<BoneInfo> bone_info_standing;
+extern const aiScene* scene_walking;
+extern const aiScene* scene_standing;
 
 int main() {
-    int division = 12;
+    int division = 14;
     int numSpheres = 100;
     float offset = 5.0f;
-    float terrainSize = 10.0f;
+    float terrainSize = 20.0f;
     float r_min = 0.01f, r_max = 0.05f;
 
     mat4 model = mat4(1.0f); //(Nessuna trasformazione) --> Qui potrei scalare, ruotare o traslare 
@@ -45,12 +49,12 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6); //Specifica a GLFW che verrà utilizzato OpenGL versione 4.6 (specifica la versione minore)
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); //Richiede un core profile di OpenGL (che esclude le funzionalità deprecate)
 
-    //GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor(); // Prendi il monitor principale
-    //const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor); // Prendi le modalità video del monitor (risoluzione, refresh rate, ecc)
-    //height = mode->height;
-    //width = mode->width;
-    //GLFWwindow* window = glfwCreateWindow(width, height, "Tessellation Shader", primaryMonitor, nullptr); // Crea la finestra fullscreen con le dimensioni del monitor
-    GLFWwindow* window = glfwCreateWindow(width, height, "Tessellation Shader", nullptr, nullptr);
+    GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor(); // Prendi il monitor principale
+    const GLFWvidmode* mode = glfwGetVideoMode(primaryMonitor); // Prendi le modalità video del monitor (risoluzione, refresh rate, ecc)
+    height = mode->height;
+    width = mode->width;
+    GLFWwindow* window = glfwCreateWindow(width, height, "Tessellation Shader", primaryMonitor, nullptr); // Crea la finestra fullscreen con le dimensioni del monitor
+    //GLFWwindow* window = glfwCreateWindow(width, height, "Tessellation Shader", nullptr, nullptr);
 
     if (!window) { //Gestione dell'errore
         std::cerr << "Errore nella creazione della finestra GLFW\n";
@@ -72,6 +76,12 @@ int main() {
         std::cerr << "Errore nell'inizializzazione di GLAD\n";
         return -1;
     }
+
+
+    //ILLUMINAZIONE
+    light.position = { 0.0, 50.0, -10.0 };
+    light.color = { 1.0,1.0,1.0 };
+    light.power = 1.0f;
 
 
     //MAPPA
@@ -100,9 +110,14 @@ int main() {
 
 
     //MODEL
+    //Walking
     string path = "Model/Knight/source/Walking.fbx";
-    loadModel(path);
-    ModelBufferPair modelPair = INIT_MODEL_BUFFERS();
+    loadModel(path, WALKING);
+    ModelBufferPair walkingModelPair = INIT_MODEL_BUFFERS();
+    //Standing
+    path = "Model/Knight/source/Standing.fbx";
+    loadModel(path, STANDING);
+    ModelBufferPair standingModelPair = INIT_MODEL_BUFFERS();
 
 
     //SHADER PROGRAMS
@@ -136,7 +151,14 @@ int main() {
     int modelLocation = glGetUniformLocation(terrainProgram, "model");
     int viewLocation = glGetUniformLocation(terrainProgram, "view");
     int projLocation = glGetUniformLocation(terrainProgram, "proj");
+    int terrainSizeTCS = glGetUniformLocation(terrainProgram, "terrainSize_tcs");
+    int terrainSizeTES = glGetUniformLocation(terrainProgram, "terrainSize_tes");
+    int cameraPosLocTerrain = glGetUniformLocation(terrainProgram, "ViewPos");
+    int lightPosLocTerrain = glGetUniformLocation(terrainProgram, "light.position");
+    int lightColorLocTerrain = glGetUniformLocation(terrainProgram, "light.color");
+    int lightPowerLocTerrain = glGetUniformLocation(terrainProgram, "light.power");
     int cameraPositionLocation = glGetUniformLocation(terrainProgram, "cameraPosition");
+    int cameraPositionLocationGS = glGetUniformLocation(terrainProgram, "cameraPosition_gs");
     //Sphere program
     int uTimeLocation_sphere = glGetUniformLocation(sphereProgram, "u_time");
     int modelLocation_sphere = glGetUniformLocation(sphereProgram, "model");
@@ -148,12 +170,16 @@ int main() {
     int modelLoc = glGetUniformLocation(modelProgram, "model");
     int viewLoc = glGetUniformLocation(modelProgram, "view");
     int projLoc = glGetUniformLocation(modelProgram, "proj");
+    int cameraPosLoc = glGetUniformLocation(modelProgram, "ViewPos");
+    int lightPosLoc = glGetUniformLocation(modelProgram, "light.position");
+    int lightColorLoc = glGetUniformLocation(modelProgram, "light.color");
+    int lightPowerLoc = glGetUniformLocation(modelProgram, "light.power");
     GLuint bonesLoc = glGetUniformLocation(modelProgram, "bones");
 
 
     //SETTINGS
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE); //Imposta la modalità Wireframe per vedere le suddivisioni fatte dallo shader
-    glDisable(GL_CULL_FACE); //Disabilita il culling
+    glDisable(GL_CULL_FACE); //Abilita il culling
     glEnable(GL_DEPTH_TEST); //Abilita il depth test
 
 
@@ -167,6 +193,12 @@ int main() {
 
     //TIME
     startTimeMillis = static_cast<long long>(glfwGetTime() * 1000.0);
+
+
+    //MODEL MOVEMENT
+    vec3 modelMovement = vec3(0.0f);
+    vec3 previousModelMovement = vec3(0.0f);
+    float rotationAngle = 0.0f;
     
 
     //MAIN LOOP
@@ -209,7 +241,14 @@ int main() {
         glUniformMatrix4fv(modelLocation, 1, GL_FALSE, value_ptr(model));
         glUniformMatrix4fv(viewLocation, 1, GL_FALSE, value_ptr(view));
         glUniformMatrix4fv(projLocation, 1, GL_FALSE, value_ptr(proj));
+        glUniform1f(terrainSizeTCS, terrainSize);
+        glUniform1f(terrainSizeTES, terrainSize);
         glUniform3fv(cameraPositionLocation, 1, value_ptr(SetupTelecamera.position));
+        glUniform3fv(cameraPositionLocationGS, 1, value_ptr(SetupTelecamera.position));
+        glUniform3fv(cameraPosLocTerrain, 1, value_ptr(SetupTelecamera.position));
+        glUniform3fv(lightPosLocTerrain, 1, value_ptr(light.position));
+        glUniform3fv(lightColorLocTerrain, 1, value_ptr(light.color));
+        glUniform1f(lightPowerLocTerrain, light.power);
 
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f); //Definisce il colore dello sfondo come grigio scuro
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //Pulisci il color e il depth buffer
@@ -237,28 +276,62 @@ int main() {
         //MODEL PROGRAM
         glUseProgram(modelProgram);
 
+        //GESTIONE STATO DELL'ANIMAZIONE
+        ModelState state;
+        bool isMoving = length(modelMovement - previousModelMovement) > 0.00001f;
+        state = isMoving ? WALKING : STANDING;
+
         //aggiornamento dell'animazione del personaggio (se presente)
-        if (scene && scene->mNumAnimations > 0 && scene->mAnimations[0]) {
-            float ticksPerSecond = scene->mAnimations[0]->mTicksPerSecond != 0 ? scene->mAnimations[0]->mTicksPerSecond : 25.0f; //quanti tick al secondo
-            float timeInTicks = animationTimeSec * ticksPerSecond; //quanti tick sono passati
-            float animationTimeTicks = fmod(timeInTicks, scene->mAnimations[0]->mDuration); //prendo la parte decimale dell'operazione modulo (animazione continua)
-            updateBoneTransforms(animationTimeTicks);
+        if (state == WALKING) {
+            if (scene_walking && scene_walking->mNumAnimations > 0 && scene_walking->mAnimations[0]) {
+                float ticksPerSecond = scene_walking->mAnimations[0]->mTicksPerSecond != 0 ? scene_walking->mAnimations[0]->mTicksPerSecond : 25.0f; //quanti tick al secondo
+                float timeInTicks = animationTimeSec * ticksPerSecond; //quanti tick sono passati
+                float animationTimeTicks = fmod(timeInTicks, scene_walking->mAnimations[0]->mDuration); //prendo la parte decimale dell'operazione modulo (animazione continua)
+                updateBoneTransforms(animationTimeTicks, state);
+            }
         }
+        else {
+            if (scene_standing && scene_standing->mNumAnimations > 0 && scene_standing->mAnimations[0]) {
+                float ticksPerSecond = scene_standing->mAnimations[0]->mTicksPerSecond != 0 ? scene_standing->mAnimations[0]->mTicksPerSecond : 25.0f; //quanti tick al secondo
+                float timeInTicks = animationTimeSec * ticksPerSecond; //quanti tick sono passati
+                float animationTimeTicks = fmod(timeInTicks, scene_standing->mAnimations[0]->mDuration); //prendo la parte decimale dell'operazione modulo (animazione continua)
+                updateBoneTransforms(animationTimeTicks, state);
+            }
+        }
+        
 
         mat4 objectModel = mat4(1.0f);
         objectModel = translate(objectModel, vec3(3.0f));
-        objectModel = scale(objectModel, vec3(0.005f));
+        objectModel = translate(objectModel, vec3(0.0f, -3.0f, -3.0f));
+        objectModel = translate(objectModel, modelMovement);
+        objectModel = scale(objectModel, vec3(0.001f));
+        objectModel = rotate(objectModel, radians(float(180)), vec3(0.0f, 1.0f, 0.0f));
+        objectModel = rotate(objectModel, radians(float(rotationAngle)), vec3(0.0f, 1.0f, 0.0f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(objectModel));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(proj));
+        glUniform3fv(cameraPosLoc, 1, value_ptr(SetupTelecamera.position));
+        glUniform3fv(lightPosLoc, 1, value_ptr(light.position));
+        glUniform3fv(lightColorLoc, 1, value_ptr(light.color));
+        glUniform1f(lightPowerLoc, light.power);
 
         mat4 boneTransforms[128];
-        for (int i = 0; i < bone_info.size(); i++)
-            boneTransforms[i] = bone_info[i].finalTransform;
 
-        glUniformMatrix4fv(bonesLoc, bone_info.size(), GL_FALSE, value_ptr(boneTransforms[0]));
+        if (state == WALKING) {
+            for (int i = 0; i < bone_info_walking.size(); i++)
+                boneTransforms[i] = bone_info_walking[i].finalTransform;
 
-        glBindVertexArray(modelPair.vao);
+            glUniformMatrix4fv(bonesLoc, bone_info_walking.size(), GL_FALSE, value_ptr(boneTransforms[0]));
+        }
+        else {
+            for (int i = 0; i < bone_info_standing.size(); i++)
+                boneTransforms[i] = bone_info_standing[i].finalTransform;
+
+            glUniformMatrix4fv(bonesLoc, bone_info_standing.size(), GL_FALSE, value_ptr(boneTransforms[0]));
+        }
+        
+
+        glBindVertexArray(walkingModelPair.vao);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
 
 
@@ -271,8 +344,12 @@ int main() {
         view = lookAt(SetupTelecamera.position, SetupTelecamera.target, SetupTelecamera.upVector);
         proj = perspective(radians(SetupProspettiva.fovY), SetupProspettiva.aspect, SetupProspettiva.near_plane, SetupProspettiva.far_plane);
     
-
-        process_input(window); //Gestione degli input da tastiera
+        auto inputResult = process_input(window);
+        previousModelMovement = modelMovement;
+        if (length(inputResult.first) > 0.0001f) {
+            modelMovement += inputResult.first;
+            rotationAngle = inputResult.second;
+        }
     }
 
 

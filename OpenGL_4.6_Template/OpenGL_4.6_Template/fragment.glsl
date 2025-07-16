@@ -3,8 +3,19 @@
 in flat int gs_isGrass;
 in flat int gs_isKelp;
 
-in vec4 gs_worldPos; //Input proveniente dal Geometry Shader
+in vec4 gs_worldPos;
+in vec3 gs_normal;
+
 out vec4 FragColor; //Output del Fragment Shader, ovvero il colore finale del pixel (variabile mandata direttamente al frame buffer)
+
+struct PointLight {
+    vec3 position;
+    vec3 color;
+    float power;
+};
+
+uniform vec3 ViewPos;
+uniform PointLight light;
 
 uniform sampler2D texture0; // snowColor
 uniform sampler2D texture1; // snowNormal
@@ -85,22 +96,51 @@ vec4 blendTextures(float h, vec2 uv) {
     return mix(col1, col2, clamp(t, 0.0, 1.0));
 }
 
+vec3 computeLighting(vec3 normal, vec3 fragPos, vec3 viewPos, vec3 baseColor) {
+    // Normale normalizzata
+    vec3 norm = normalize(normal);
+
+    // Direzione della luce
+    vec3 lightDir = normalize(light.position - fragPos);
+
+    // Ambient
+    float ambientStrength = 0.1;
+    vec3 ambient = ambientStrength * light.color;
+
+    // Diffuse
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = diff * light.color;
+
+    // Specular
+    vec3 viewDir = normalize(viewPos - fragPos);
+    vec3 reflectDir = reflect(-lightDir, norm);
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32.0); // shininess fisso
+    float specularStrength = 0.5;
+    vec3 specular = specularStrength * spec * light.color;
+
+    // Calcolo illuminazione finale moltiplicata per colore base e potenza luce
+    vec3 lighting = (ambient + diffuse + specular) * baseColor * light.power;
+
+    return lighting;
+}
+
 
 
 void main() {
     float h = gs_worldPos.y;
     vec2 uv = gs_worldPos.xz;
+    vec3 baseColor;
 
     if (gs_isGrass == 1) {
-        FragColor = vec4(0.2, 0.8, 0.1, 1.0); // Verde foglia
+        baseColor = vec3(0.2, 0.8, 0.1);
     }
     else if (gs_isKelp == 1) {
-        FragColor = vec4(0.2, 0.25, 0.1, 1.0); // Verde alga
+        baseColor = vec3(0.2, 0.25, 0.1);
     }
     else {
-        vec4 color = blendTextures(h, uv);
-        FragColor = color;
-        //vec3 color = interpolateColor(h);
-        //FragColor = vec4(color, 0.0f);
+        baseColor = blendTextures(h, uv).rgb;
     }
+
+    vec3 lighting = computeLighting(normalize(gs_normal), gs_worldPos.xyz, ViewPos, baseColor);
+    FragColor = vec4(lighting, 1.0);
 }

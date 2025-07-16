@@ -4,16 +4,17 @@
 
 layout(vertices = 4) out; //Specifica che la patch output avrà 4 vertici, quindi la tessellazione sarà fatta su patch quadrate
 
+uniform float terrainSize_tcs;
 uniform vec3 cameraPosition;
 uniform sampler2D u_fbmTexture;
 
 const int MIN_TES = 6;
-const int MAX_TES = 40;
+const int MAX_TES = 30;
 const float MIN_DIST = 1.5;
 const float MAX_DIST = 2.5;
-const float MAX_HEIGHT_DIFF = 0.08;
+const float MAX_HEIGHT_DIFF = 0.04;
 const float HEIGHT_SCALE = 1.5;
-const float UV_SCALE = 0.1;
+const float UV_SCALE = 1.0f / terrainSize_tcs;
 
 void main() {
     //Copia la posizione di ciascun vertice di input come output, senza modifiche (gl_InvocationID è l'indice dell'istanza corrente del vertex)
@@ -46,7 +47,7 @@ void main() {
         // Calcola LOD (livello tessellazione) basato su distanza e dislivello
         for (int i = 0; i < 4; ++i) {
             float dist = length(cameraPosition - center[i]); //distanza fra centro del lato e telecamera
-            int tess;
+            float tess;
             if (dist > MAX_DIST) { //se la distanza supera la distanza massima allora non faccio tessellazione
                 tess = MIN_TES;
             }
@@ -56,7 +57,7 @@ void main() {
                 float lodFactor = 0.6 * distFactor + 0.4 * (1.0 - heightFactor); //più è distante più il lodfactor aumenta, più è piatta la patch meno è dettagliata
 
                 //interpolazione lineare tra la tessellazione massima e minima
-                tess = int(mix(MAX_TES, MIN_TES, lodFactor)); //più il lodfactor è alto più il dettaglio sarà scarso
+                tess = mix(MAX_TES, MIN_TES, lodFactor); //più il lodfactor è alto più il dettaglio sarà scarso
             }
             gl_TessLevelOuter[i] = tess;
         }

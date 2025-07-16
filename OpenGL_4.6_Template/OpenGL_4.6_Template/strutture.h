@@ -4,6 +4,11 @@
 #define MAX_NUM_BONES_PER_VERTEX 4
 #define ARRAY_SIZE_IN_ELEMENTS(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+enum ModelState {
+    WALKING = 0,
+    STANDING = 1
+};
+
 struct VertexBoneData {
     unsigned int boneIDs[MAX_NUM_BONES_PER_VERTEX] = { 0 };
     float weights[MAX_NUM_BONES_PER_VERTEX] = { 0.0f };
@@ -68,3 +73,19 @@ typedef struct {
     unsigned int vboBoneWeights;
     unsigned int ebo;
 } ModelBufferPair;
+
+typedef struct {
+    vec3 position;
+    vec3 color;
+    GLfloat power;
+} pointLight;
+
+typedef struct {
+    GLuint light_position_pointer;
+    GLuint light_color_pointer;
+    GLuint light_power_pointer;
+    GLuint material_diffuse;
+    GLuint material_ambient;
+    GLuint material_specular;
+    GLuint material_shininess;
+} LightShaderUniform;

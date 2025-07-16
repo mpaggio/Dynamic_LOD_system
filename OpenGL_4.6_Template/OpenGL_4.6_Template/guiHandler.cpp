@@ -3,6 +3,8 @@
 extern bool lineMode;
 extern bool mouseLocked;
 
+extern pointLight light;
+
 void initializeGui(GLFWwindow* window) {
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
@@ -19,7 +21,7 @@ void renderGui() {
 
     float currentFPS = ImGui::GetIO().Framerate;
 
-    ImGui::SetNextWindowSize(ImVec2(400, 200));
+    ImGui::SetNextWindowSize(ImVec2(400, 250));
 
     ImGui::Begin("Performance");
 
@@ -32,6 +34,10 @@ void renderGui() {
     ImGui::Text("FPS: %.1f", currentFPS);
 
     ImGui::Text("Current mode: %s", lineMode ? "LINE" : "FILL");
+
+    ImGui::SliderFloat("position x", &light.position.x, -50.0f, 50.0f);
+    ImGui::SliderFloat("position y", &light.position.y, -50.0f, 50.0f);
+    ImGui::SliderFloat("position z", &light.position.z, -50.0f, 50.0f);
 
     ImGui::End();
 

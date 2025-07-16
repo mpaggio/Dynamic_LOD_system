@@ -7,11 +7,14 @@ layout(triangle_strip, max_vertices = 100) out; // aumentato per supportare più 
 
 in vec4 worldPos[]; // Input dal Tessellation Evaluation Shader
 out vec4 gs_worldPos; // Output per il Fragment Shader
+out vec3 gs_normal;
 out int gs_isGrass; //se si tratta di erba
 out int gs_isKelp; //se si tratta di alghe
 
-uniform float u_time;
+float MAX_DISTANCE = 4.0f;
 
+uniform float u_time;
+uniform vec3 cameraPosition_gs;
 uniform mat4 view; // Simula la camera
 uniform mat4 proj; // Matrice di proiezione
 
@@ -40,7 +43,6 @@ void generateGrass() {
     float amp = 0.008; // ampiezza oscillazione (movimento laterale con il tempo)
     float freq = 1.5; // frequenza oscillazione (più è alta, più è rapida)
     float maxAngle = radians(20.0); // orientamento casuale massimo ±20°
-    int phaseIndex = 0; // per animazione desincronizzata (fase diversa per ogni foglia)
 
     // Posizioni delle foglie (i 3 vertici, il centro di ogni lato, il centro del triangolo)
     vec4 positions[8];
@@ -70,24 +72,27 @@ void generateGrass() {
         vec4 baseLeft = pos + vec4(-dir * bladeWidth * 0.5, 0.0);
         vec4 baseRight = pos + vec4(dir * bladeWidth * 0.5, 0.0);
 
-        float phase = float(phaseIndex++) * 1.1; //ogni foglia ha una fase diversa
+        float phase = random(vec2(pos.xz)) * 6.28; //ogni foglia ha una fase random
         vec3 tipPos = pos.xyz + n * bladeHeight + dir * sin(u_time * freq + phase) * amp; //La direzione viene aggiornata con la forma generale della sinusoide "A * sin(2 * pi * f * t + fase)"
         vec4 tip = vec4(tipPos, 1.0);
 
         gl_Position = proj * view * baseLeft;
         gs_worldPos = baseLeft;
+        gs_normal = normalize(n);
         gs_isGrass = 1;
         gs_isKelp = 0;
         EmitVertex();
 
         gl_Position = proj * view * baseRight;
         gs_worldPos = baseRight;
+        gs_normal = normalize(n);
         gs_isGrass = 1;
         gs_isKelp = 0;
         EmitVertex();
 
         gl_Position = proj * view * tip;
         gs_worldPos = tip;
+        gs_normal = normalize(n);
         gs_isGrass = 1;
         gs_isKelp = 0;
         EmitVertex();
@@ -141,20 +146,24 @@ void generateKelps() {
         vec4 v3 = vec4(p1 + nextSide, 1.0); //top 2
 
         // Primo triangolo
+        vec3 normal = normalize(cross(v1.xyz - v0.xyz, v2.xyz - v0.xyz));
         gl_Position = proj * view * v0;
         gs_worldPos = v0;
+        gs_normal = normalize(normal);
         gs_isGrass = 0;
         gs_isKelp = 1;
         EmitVertex();
 
         gl_Position = proj * view * v1;
         gs_worldPos = v1;
+        gs_normal = normalize(normal);
         gs_isGrass = 0;
         gs_isKelp = 1;
         EmitVertex();
 
         gl_Position = proj * view * v2;
         gs_worldPos = v2;
+        gs_normal = normalize(normal);
         gs_isGrass = 0;
         gs_isKelp = 1;
         EmitVertex();
@@ -162,20 +171,24 @@ void generateKelps() {
         EndPrimitive();
 
         // Secondo triangolo
+        vec3 normal2 = normalize(cross(v3.xyz - v1.xyz, v2.xyz - v1.xyz));
         gl_Position = proj * view * v2;
         gs_worldPos = v2;
+        gs_normal = normalize(normal2);
         gs_isGrass = 0;
         gs_isKelp = 1;
         EmitVertex();
 
         gl_Position = proj * view * v1;
         gs_worldPos = v1;
+        gs_normal = normalize(normal2);
         gs_isGrass = 0;
         gs_isKelp = 1;
         EmitVertex();
 
         gl_Position = proj * view * v3;
         gs_worldPos = v3;
+        gs_normal = normalize(normal2);
         gs_isGrass = 0;
         gs_isKelp = 1;
         EmitVertex();
@@ -190,20 +203,34 @@ void generateKelps() {
 }
 
 void main() {
+    vec3 terrainNormal = normalize(cross(
+        worldPos[1].xyz - worldPos[0].xyz,
+        worldPos[2].xyz - worldPos[0].xyz
+    ));
+
     // Disegna il triangolo terreno
     for (int i = 0; i < 3; ++i) {
         gl_Position = proj * view * worldPos[i];
         gs_worldPos = worldPos[i];
+        gs_normal = normalize(terrainNormal);
         gs_isGrass = 0;
+        gs_isKelp = 0;
         EmitVertex();
     }
     EndPrimitive();
 
-    float centerHeight = (worldPos[0].y + worldPos[1].y + worldPos[2].y) / 3.0;
-    if (centerHeight > 0.1 && centerHeight < 0.6) {
-        generateGrass();
-    }
-    else if (centerHeight < -0.6) {
-        generateKelps();
+    // Calcolo centro triangolo
+    vec3 center = (worldPos[0].xyz + worldPos[1].xyz + worldPos[2].xyz) / 3.0;
+    float distToCamera = length(cameraPosition_gs - center);
+
+    // LOD in base alla distanza
+    if (distToCamera < MAX_DISTANCE) {
+        float centerHeight = center.y;
+        if (centerHeight > 0.1 && centerHeight < 0.6) {
+            generateGrass();
+        }
+        else if (centerHeight < -0.6) {
+            generateKelps();
+        }
     }
 }

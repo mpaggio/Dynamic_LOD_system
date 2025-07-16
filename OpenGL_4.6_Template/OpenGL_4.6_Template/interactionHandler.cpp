@@ -57,10 +57,12 @@ void cursor_position_callback(GLFWwindow* window, double xposIn, double yposIn) 
 }
 
 
-void process_input(GLFWwindow* window) {
+pair<vec3, float> process_input(GLFWwindow* window) {
     static bool mouseWasPressed = false;
     static bool rightMousePressedLastFrame = false;
     float factor = 10.0f;
+    vec3 modelMovement = vec3(0.0f);
+    float rotationAngle = 0.0f;
 
     // Verifica se il tasto sinistro è premuto
     if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
@@ -130,6 +132,23 @@ void process_input(GLFWwindow* window) {
     //Pressione "ESC"
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
+
+    //Movimento personaggio
+    float moveSpeed = 0.002f;
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+        modelMovement.z -= moveSpeed;
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+        modelMovement.z += moveSpeed;
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+        modelMovement.x -= moveSpeed;
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+        modelMovement.x += moveSpeed;
+
+    if (length(modelMovement) > 0.0001f) {
+        rotationAngle = degrees(atan(modelMovement.x, -modelMovement.z));
+    }
+
+    return make_pair(modelMovement, -rotationAngle);
 }
 
 

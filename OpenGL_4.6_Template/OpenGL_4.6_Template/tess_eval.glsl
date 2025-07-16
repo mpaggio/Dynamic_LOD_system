@@ -2,12 +2,13 @@
 
 //UNA ESECUZIONE PER OGNI VERTICE GENERATO DAL TCS
 
-layout(quads, equal_spacing, cw) in; //Specifica che il patch è un triangolo che usa una spaziatura uguale e definendo la direzione dell'ordinamento dei vertici (clockwise)
+layout(quads, fractional_odd_spacing, cw) in; //Specifica che il patch è un triangolo che usa una spaziatura uguale e definendo la direzione dell'ordinamento dei vertici (clockwise)
 
+uniform float terrainSize_tes;
 uniform mat4 model; //Matrice di trasformazione da coordinate locali a coordinate globali 3D
 uniform sampler2D u_fbmTexture;
 
-const float UV_SCALE = 0.1;
+const float UV_SCALE = 1.0f / terrainSize_tes;
 const float HEIGHT_SCALE = 1.5;
 
 out vec4 worldPos; //Da inviare al Geometry Shader
