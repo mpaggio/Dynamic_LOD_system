@@ -12,6 +12,7 @@ const float UV_SCALE = 1.0f / terrainSize_tes;
 const float HEIGHT_SCALE = 1.5;
 
 out vec4 worldPos; //Da inviare al Geometry Shader
+out vec3 tes_normal;
 
 void main() {
 
@@ -36,4 +37,17 @@ void main() {
     pos.y += height * HEIGHT_SCALE; // Applica l'altezza con uno scaling
 
     worldPos = model * vec4(pos, 1.0); //Trasforma in coordinate del mondo 3D a partire da quelle locali
+
+    //Calcolo delle normali per vertice
+    vec2 delta = vec2(1.0 / terrainSize_tes); // o un altro passo piccolo
+
+    float hL = texture(u_fbmTexture, uv - vec2(delta.x, 0.0)).r * HEIGHT_SCALE;
+    float hR = texture(u_fbmTexture, uv + vec2(delta.x, 0.0)).r * HEIGHT_SCALE;
+    float hD = texture(u_fbmTexture, uv - vec2(0.0, delta.y)).r * HEIGHT_SCALE;
+    float hU = texture(u_fbmTexture, uv + vec2(0.0, delta.y)).r * HEIGHT_SCALE;
+
+    vec3 dx = vec3(2.0 * delta.x, hR - hL, 0.0);
+    vec3 dz = vec3(0.0, hU - hD, 2.0 * delta.y);
+    vec3 normal = normalize(cross(dz, dx));
+    tes_normal = mat3(transpose(inverse(model))) * normal;
 }

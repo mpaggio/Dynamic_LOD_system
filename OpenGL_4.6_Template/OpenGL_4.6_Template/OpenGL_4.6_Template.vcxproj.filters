@@ -96,6 +96,8 @@
     <None Include="assimp-vc142-mtd.dll" />
     <None Include="vertex_model.glsl" />
     <None Include="fragment_model.glsl" />
+    <None Include="vertex_skybox.glsl" />
+    <None Include="fragment_skybox.glsl" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="strutture.h">

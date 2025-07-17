@@ -2,11 +2,11 @@
 
 layout(location = 0) in vec3 aPos;
 layout(location = 1) in vec3 aNormal;
-layout(location = 2) in vec3 aColor;
+layout(location = 2) in vec2 aTextCoords;
 layout(location = 3) in ivec4 aBoneIDs;
 layout(location = 4) in vec4 aWeights;
 
-out vec3 FragColor;
+out vec2 TextCoords;
 out vec3 Normal;
 out vec3 FragPos;
 
@@ -28,7 +28,7 @@ void main() {
     mat3 normalMatrix = transpose(inverse(mat3(model * skinMatrix)));
     Normal = normalize(normalMatrix * aNormal);
 
-    FragColor = aColor;
+    TextCoords = aTextCoords;
 
     gl_Position = proj * view * vec4(FragPos, 1.0);
 }

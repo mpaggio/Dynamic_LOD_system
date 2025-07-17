@@ -134,7 +134,7 @@ pair<vec3, float> process_input(GLFWwindow* window) {
         glfwSetWindowShouldClose(window, true);
 
     //Movimento personaggio
-    float moveSpeed = 0.002f;
+    float moveSpeed = 0.001f;
     if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
         modelMovement.z -= moveSpeed;
     if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)

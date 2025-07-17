@@ -20,6 +20,7 @@ long long startTimeMillis = 0;
 
 bool mouseLocked = true;
 bool lineMode = true;
+bool mainCharacter = true;
 
 ViewSetup SetupTelecamera;
 PerspectiveSetup SetupProspettiva;
@@ -79,19 +80,15 @@ int main() {
 
 
     //ILLUMINAZIONE
-    light.position = { 0.0, 50.0, -10.0 };
+    light.position = { 10.0, 50.0, -10.0 };
     light.color = { 1.0,1.0,1.0 };
-    light.power = 1.0f;
+    light.power = 3.0f;
 
 
     //MAPPA
     vector<float> planeVertices = simplePlane(division, terrainSize);
     vector<float> planePatches = generatePatches(planeVertices, division);
     BufferPair planePair = INIT_PLANE_BUFFERS(planePatches);
-
-
-    //TEXTURE
-    GLuint fbmTexture = generateFBMTexture(512, 512, 8);
 
 
     //TRIANGOLI x SFERE
@@ -110,14 +107,22 @@ int main() {
 
 
     //MODEL
+    //Texture
+    string path = "Model/Knight/source/castle_guard_01.fbx";
+    //extractEmbeddedTextures(path, "Model/Knight/textures");
     //Walking
-    string path = "Model/Knight/source/Walking.fbx";
+    path = "Model/Knight/source/Walking.fbx";
     loadModel(path, WALKING);
     ModelBufferPair walkingModelPair = INIT_MODEL_BUFFERS();
     //Standing
     path = "Model/Knight/source/Standing.fbx";
     loadModel(path, STANDING);
     ModelBufferPair standingModelPair = INIT_MODEL_BUFFERS();
+
+
+    //SKYBOX
+    vector<float> skyboxVertices = generateSkyboxCube();
+    BufferPair skyboxPair = INIT_SKYBOX_BUFFERS(skyboxVertices);
 
 
     //SHADER PROGRAMS
@@ -139,10 +144,17 @@ int main() {
         "vertex_model.glsl",
         "fragment_model.glsl"
     );
+    unsigned int skyboxProgram = createSimpleShaderProgram(
+        "vertex_skybox.glsl",
+        "fragment_skybox.glsl"
+    );
 
 
     //TEXTURES
+    GLuint fbmTexture = generateFBMTexture(512, 512, 8);
     vector<GLuint> allTextures = loadAllTextures();
+    GLuint modelTexture = loadSingleTexture("Model/Knight/textures/texture_embedded_0.png");
+    GLuint skyboxTexture = loadSkybox();
 
 
     //UNIFORMS
@@ -175,6 +187,9 @@ int main() {
     int lightColorLoc = glGetUniformLocation(modelProgram, "light.color");
     int lightPowerLoc = glGetUniformLocation(modelProgram, "light.power");
     GLuint bonesLoc = glGetUniformLocation(modelProgram, "bones");
+    //Skybox program
+    int viewLocSkybox = glGetUniformLocation(skyboxProgram, "View");
+    int projLocSkybox = glGetUniformLocation(skyboxProgram, "Projection");
 
 
     //SETTINGS
@@ -228,7 +243,7 @@ int main() {
         }
         //Lega le texture alle relative variabili uniform
         for (int i = 0; i < allTextures.size(); i++) {
-            std::string uniformName = "texture" + std::to_string(i);
+            string uniformName = "texture" + std::to_string(i);
             GLint location = glGetUniformLocation(terrainProgram, uniformName.c_str());
             glUniform1i(location, i);
         }
@@ -276,6 +291,12 @@ int main() {
         //MODEL PROGRAM
         glUseProgram(modelProgram);
 
+        glActiveTexture(GL_TEXTURE0 + 0);
+        glBindTexture(GL_TEXTURE_2D, modelTexture);
+        string uniformName = "modelTexture";
+        GLint location = glGetUniformLocation(modelProgram, uniformName.c_str());
+        glUniform1i(location, 0);
+
         //GESTIONE STATO DELL'ANIMAZIONE
         ModelState state;
         bool isMoving = length(modelMovement - previousModelMovement) > 0.00001f;
@@ -298,15 +319,14 @@ int main() {
                 updateBoneTransforms(animationTimeTicks, state);
             }
         }
-        
 
         mat4 objectModel = mat4(1.0f);
         objectModel = translate(objectModel, vec3(3.0f));
         objectModel = translate(objectModel, vec3(0.0f, -3.0f, -3.0f));
         objectModel = translate(objectModel, modelMovement);
-        objectModel = scale(objectModel, vec3(0.001f));
+        objectModel = scale(objectModel, vec3(0.0005f));
         objectModel = rotate(objectModel, radians(float(180)), vec3(0.0f, 1.0f, 0.0f));
-        objectModel = rotate(objectModel, radians(float(rotationAngle)), vec3(0.0f, 1.0f, 0.0f));
+        objectModel = rotate(objectModel, radians(rotationAngle), vec3(0.0f, 1.0f, 0.0f));
         glUniformMatrix4fv(modelLoc, 1, GL_FALSE, value_ptr(objectModel));
         glUniformMatrix4fv(viewLoc, 1, GL_FALSE, value_ptr(view));
         glUniformMatrix4fv(projLoc, 1, GL_FALSE, value_ptr(proj));
@@ -329,10 +349,38 @@ int main() {
 
             glUniformMatrix4fv(bonesLoc, bone_info_standing.size(), GL_FALSE, value_ptr(boneTransforms[0]));
         }
-        
+
 
         glBindVertexArray(walkingModelPair.vao);
         glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+
+        //altezza personaggio
+        vec3 modelAnchor = getBoundingBoxBaseCenter(); //ancora del modello
+        vec3 modelAnchorWorld; //ancora del modello in world space
+        vec4 transformed = objectModel * vec4(modelAnchor, 1.0f);
+        modelAnchorWorld = vec3(transformed);
+        float height = getHeightAt(modelAnchorWorld.x, modelAnchorWorld.z, terrainSize, 512, 512);
+
+
+        //SKYBOX
+        glDepthFunc(GL_LEQUAL);       // per permettere la skybox in fondo
+        glDepthMask(GL_FALSE);        // disattiva scrittura nello z-buffer
+
+        glUseProgram(skyboxProgram);
+        
+        glUniform1i(glGetUniformLocation(skyboxProgram, "skybox"), 0);
+        glUniformMatrix4fv(viewLocSkybox, 1, GL_FALSE, value_ptr(view));
+        glUniformMatrix4fv(projLocSkybox, 1, GL_FALSE, value_ptr(proj));
+
+        glBindVertexArray(skyboxPair.vao);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, skyboxTexture);
+
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+        
+        glBindVertexArray(0);
+        glDepthMask(GL_TRUE);         // riattiva scrittura per gli oggetti normali
+        glDepthFunc(GL_LESS);         // ripristina depth test standard
 
 
         renderGui();
@@ -350,6 +398,7 @@ int main() {
             modelMovement += inputResult.first;
             rotationAngle = inputResult.second;
         }
+        modelMovement.y = height + 0.01f;
     }
 
 

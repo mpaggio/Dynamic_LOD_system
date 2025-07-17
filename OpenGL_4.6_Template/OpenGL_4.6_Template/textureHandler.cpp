@@ -55,40 +55,13 @@ vector<GLuint> loadAllTextures() {
     return texturesID;
 }
 
-string extractFilename(const string& fullPath) {
-    size_t pos = fullPath.find_last_of("\\/");
-    if (pos == std::string::npos) {
-        return fullPath;
-    }
-    return fullPath.substr(pos + 1);
-}
-
-GLuint loadTextureFromMaterial(aiMaterial* material, aiTextureType type, const string& directory) {
-    aiString texturePath;
-    bool hasTexture = (material->GetTexture(type, 0, &texturePath) == AI_SUCCESS);
-
-    string filenameOnly;
-   
-    if (hasTexture) {
-        filenameOnly = extractFilename(texturePath.C_Str());
-    }
-    else {
-        filenameOnly = "Elk.png";
-    }
-
-    // Se la texture non è esattamente "Antler.png", usiamo "Elk.png"
-    if (filenameOnly != "Antler.png") {
-        filenameOnly = "Elk.png";
-    }
-
-    string filename = directory + "/" + filenameOnly;
-    
+GLuint loadSingleTexture(const string& path) {
     int width, height, channels;
     stbi_set_flip_vertically_on_load(true);
-    unsigned char* data = stbi_load(filename.c_str(), &width, &height, &channels, 0);
+    unsigned char* data = stbi_load(path.c_str(), &width, &height, &channels, 0);
 
     if (!data) {
-        cerr << "ATTENZIONE: Texture mancante o non caricabile: " << filename << endl;
+        cerr << "Failed to load texture: " << path << endl;
         return 0;
     }
 
@@ -96,20 +69,28 @@ GLuint loadTextureFromMaterial(aiMaterial* material, aiTextureType type, const s
     glGenTextures(1, &textureID);
     glBindTexture(GL_TEXTURE_2D, textureID);
 
-    GLenum format;
-    if (channels == 1)
+    GLenum format = GL_RGB;
+    GLint internalFormat = GL_RGB8;
+
+    if (channels == 1) {
         format = GL_RED;
-    else if (channels == 3)
+        internalFormat = GL_R8;
+    }
+    else if (channels == 3) {
         format = GL_RGB;
-    else if (channels == 4)
+        internalFormat = GL_RGB8;
+    }
+    else if (channels == 4) {
         format = GL_RGBA;
+        internalFormat = GL_RGBA8;
+    }
     else {
-        cerr << "Formato texture non supportato: " << channels << " canali\n";
+        cerr << "Unsupported texture format: " << channels << " channels\n";
         stbi_image_free(data);
         return 0;
     }
 
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     // Set texture parameters
@@ -119,6 +100,44 @@ GLuint loadTextureFromMaterial(aiMaterial* material, aiTextureType type, const s
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     stbi_image_free(data);
+
+    return textureID;
+}
+
+GLuint loadSkybox() {
+    vector<string> faces {
+        "Skybox/stars/right.jpg",
+        "Skybox/stars/left.jpg",
+        "Skybox/stars/top.jpg",
+        "Skybox/stars/bottom.jpg",
+        "Skybox/stars/front.jpg",
+        "Skybox/stars/back.jpg"
+    };
+
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    stbi_set_flip_vertically_on_load(0);
+    for (unsigned int i = 0; i < faces.size(); i++) {
+        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        
+        if (data) {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        }
+        else {
+            cout << "Cubemap tex failed to load at path: " << faces[i] << endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     return textureID;
 }

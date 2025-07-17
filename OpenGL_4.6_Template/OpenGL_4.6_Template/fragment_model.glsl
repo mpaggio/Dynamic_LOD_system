@@ -1,6 +1,6 @@
 #version 460 core
 
-in vec3 FragColor;
+in vec2 TextCoords;
 in vec3 FragPos;
 in vec3 Normal;
 
@@ -14,6 +14,8 @@ struct PointLight {
 
 uniform vec3 ViewPos;
 uniform PointLight light;
+
+uniform sampler2D modelTexture;
 
 void main() {
 
@@ -38,7 +40,11 @@ void main() {
     float specularStrength = 0.5;
     vec3 specular = specularStrength * spec * light.color;
 
-    vec3 lighting = (ambient + diffuse + specular) * FragColor * light.power;
+    //Sample della texture
+    vec3 baseColor = texture(modelTexture, TextCoords).rgb;
+
+    //Combinazione luce - texture
+    vec3 lighting = (ambient + diffuse + specular) * baseColor * light.power;
 
     color = vec4(lighting, 1.0);
 }

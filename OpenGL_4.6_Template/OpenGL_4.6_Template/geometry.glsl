@@ -6,6 +6,8 @@ layout(triangles) in;
 layout(triangle_strip, max_vertices = 100) out; // aumentato per supportare più foglie
 
 in vec4 worldPos[]; // Input dal Tessellation Evaluation Shader
+in vec3 tes_normal[];
+
 out vec4 gs_worldPos; // Output per il Fragment Shader
 out vec3 gs_normal;
 out int gs_isGrass; //se si tratta di erba
@@ -203,16 +205,11 @@ void generateKelps() {
 }
 
 void main() {
-    vec3 terrainNormal = normalize(cross(
-        worldPos[1].xyz - worldPos[0].xyz,
-        worldPos[2].xyz - worldPos[0].xyz
-    ));
-
     // Disegna il triangolo terreno
     for (int i = 0; i < 3; ++i) {
         gl_Position = proj * view * worldPos[i];
         gs_worldPos = worldPos[i];
-        gs_normal = normalize(terrainNormal);
+        gs_normal = normalize(tes_normal[i]);
         gs_isGrass = 0;
         gs_isKelp = 0;
         EmitVertex();

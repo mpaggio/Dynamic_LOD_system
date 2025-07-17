@@ -1,5 +1,7 @@
 #include "noiseHandler.h"
 
+vector<float> textureData;
+
 inline vector<int> MakePermutation() {
 	vector<int> p(256);
 	for (int i = 0; i < 256; ++i)
@@ -102,6 +104,8 @@ GLuint generateFBMTexture(int width, int height, int numOctaves) {
 		}
 	}
 
+	textureData = data;
+
 	// Genera texture OpenGL
 	GLuint textureID;
 	glGenTextures(1, &textureID);
@@ -116,4 +120,50 @@ GLuint generateFBMTexture(int width, int height, int numOctaves) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
 	return textureID;
+}
+
+float getHeightAt(float x, float z, float terrainSize, int texWidth, int texHeight) {
+	// Se la posizione è fuori dal terreno, restituisci altezza 0.0
+	if (x < 0.0f || x > terrainSize || z > 0.0f || z < -terrainSize)
+		return 0.0f;
+
+	// Converte da world space a UV
+	float u = x / terrainSize;
+	float v = z / terrainSize;
+
+	// Wrapping in [0, 1] per sicurezza
+	u = u - floor(u);
+	v = v - floor(v);
+
+	// Conversione a pixel
+	int texX = static_cast<int>(u * texWidth);
+	int texY = static_cast<int>(v * texHeight);
+
+	// Clamp per sicurezza
+	texX = clamp(texX, 0, texWidth - 1);
+	texY = clamp(texY, 0, texHeight - 1);
+
+	float value = textureData[texY * texWidth + texX];
+
+	const float HEIGHT_SCALE = 1.5f;
+	return value * HEIGHT_SCALE;
+}
+
+vec3 getNormalAt(float x, float z, float terrainSize, int texWidth, int texHeight) {
+	// Passo di campionamento basato su dimensione terreno e risoluzione heightmap
+	float delta = terrainSize / static_cast<float>(std::min(texWidth, texHeight));
+
+	// Campiona le altezze intorno al punto (x,z)
+	float hL = getHeightAt(x - delta, z, terrainSize, texWidth, texHeight);
+	float hR = getHeightAt(x + delta, z, terrainSize, texWidth, texHeight);
+	float hD = getHeightAt(x, z - delta, terrainSize, texWidth, texHeight);
+	float hU = getHeightAt(x, z + delta, terrainSize, texWidth, texHeight);
+
+	// Vettori tangenti (dx e dz) lungo la superficie
+	vec3 dx = vec3(2.0f * delta, hR - hL, 0.0f);
+	vec3 dz = vec3(0.0f, hU - hD, 2.0f * delta);
+
+	// Normale è il cross product dei vettori tangenti
+	vec3 normal = normalize(cross(dz, dx));
+	return normal;
 }

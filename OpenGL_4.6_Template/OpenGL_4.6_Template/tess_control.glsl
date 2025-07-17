@@ -9,7 +9,7 @@ uniform vec3 cameraPosition;
 uniform sampler2D u_fbmTexture;
 
 const int MIN_TES = 6;
-const int MAX_TES = 30;
+const int MAX_TES = 32;
 const float MIN_DIST = 1.5;
 const float MAX_DIST = 2.5;
 const float MAX_HEIGHT_DIFF = 0.04;

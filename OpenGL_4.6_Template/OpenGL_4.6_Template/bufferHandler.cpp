@@ -2,7 +2,7 @@
 
 extern vector<vec3> positions;
 extern vector<vec3> normals;
-extern vector<vec3> texCoords;
+extern vector<vec2> texCoords;
 extern vector<unsigned int> indices;
 
 extern vector<BoneInfo> bone_info; 
@@ -21,6 +21,8 @@ BufferPair INIT_PLANE_BUFFERS(vector<float> planeVertices) {
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); //Dice a OpenGL come leggere i dati nel VBO per usarli negli shader
 	glEnableVertexAttribArray(0); //Attiva l'attributo numero 0 (OpenGL userà i dati collegati a quell'attributo durante il rendering)
 
+    glBindVertexArray(0);
+
 	return pair;
 }
 
@@ -36,6 +38,8 @@ BufferPair INIT_QUAD_BUFFERS(float* vertices, size_t count) {
 	glBufferData(GL_ARRAY_BUFFER, count * sizeof(float), vertices, GL_STATIC_DRAW); //Copia i dati del quadrilatero nella memoria della GPU
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0); //Dice a OpenGL come leggere i dati nel VBO per usarli negli shader
 	glEnableVertexAttribArray(0); //Attiva l'attributo numero 0 (OpenGL userà i dati collegati a quell'attributo durante il rendering)
+
+    glBindVertexArray(0);
 
 	return pair;
 }
@@ -111,9 +115,9 @@ ModelBufferPair INIT_MODEL_BUFFERS() {
 
     // TEX COORDS
     glBindBuffer(GL_ARRAY_BUFFER, pair.vboTexCoords);
-    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(vec3), texCoords.data(), GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, texCoords.size() * sizeof(vec2), texCoords.data(), GL_STATIC_DRAW);
     glEnableVertexAttribArray(2); // location 2
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(vec2), (void*)0);
 
     // BONES: boneIDs (interi)
     glGenBuffers(1, &pair.vboBoneIDs);
@@ -132,6 +136,24 @@ ModelBufferPair INIT_MODEL_BUFFERS() {
     // INDICI
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, pair.ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+
+    glBindVertexArray(0);
+
+    return pair;
+}
+
+BufferPair INIT_SKYBOX_BUFFERS(vector<float> skyboxVertices) {
+    BufferPair pair;
+
+    glGenVertexArrays(1, &pair.vao);
+    glGenBuffers(1, &pair.vbo);
+
+    glBindVertexArray(pair.vao);
+    glBindBuffer(GL_ARRAY_BUFFER, pair.vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, skyboxVertices.size() * sizeof(float), skyboxVertices.data(), GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(0);
 
     glBindVertexArray(0);
 

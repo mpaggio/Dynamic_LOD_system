@@ -2,6 +2,7 @@
 
 extern bool lineMode;
 extern bool mouseLocked;
+extern bool mainCharacter;
 
 extern pointLight light;
 
@@ -38,6 +39,8 @@ void renderGui() {
     ImGui::SliderFloat("position x", &light.position.x, -50.0f, 50.0f);
     ImGui::SliderFloat("position y", &light.position.y, -50.0f, 50.0f);
     ImGui::SliderFloat("position z", &light.position.z, -50.0f, 50.0f);
+
+    ImGui::Checkbox("Abilita personaggio", &mainCharacter);
 
     ImGui::End();
 

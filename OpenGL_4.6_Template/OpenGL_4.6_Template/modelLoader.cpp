@@ -5,7 +5,7 @@ mat4 globalInverseTransformation;
 
 vector<vec3> positions;
 vector<vec3> normals;
-vector<vec3> texCoords;
+vector<vec2> texCoords;
 vector<unsigned int> indices;
 
 vector<BoneInfo> bone_info_walking; //contiene offset matrix e la trasformazione animata finale (walking)
@@ -16,8 +16,10 @@ vector<int> mesh_vertices; //contiene l'indice iniziale di ogni mesh all'interno
 map<string, unsigned int> bone_name_to_index_walking; //mapping dai nomi delle ossa agli indici relativi (walking)
 map<string, unsigned int> bone_name_to_index_standing; //(standing)
 
+Importer importerBindPose;
 Importer importerWalking;
 Importer importerStanding;
+const aiScene* scene_bind_pose;
 const aiScene* scene_walking;
 const aiScene* scene_standing;
 
@@ -326,11 +328,11 @@ void loadSceneData(const aiScene* scene, ModelState state) {
             // Texture coords
             if (mesh->HasTextureCoords(0)) {
                 aiVector3D uv = mesh->mTextureCoords[0][v];
-                texCoords.push_back(vec3(uv.x, uv.y, uv.z));
+                texCoords.push_back(vec2(uv.x, uv.y));
             }
             else {
                 aiVector3D backupUV(0.0f, 0.0f, 0.0f);
-                texCoords.push_back(vec3(backupUV.x, backupUV.y, backupUV.z));
+                texCoords.push_back(vec2(backupUV.x, backupUV.y));
             }
         }
 
@@ -397,9 +399,104 @@ void loadModel(string modelPath, ModelState state) {
             printf("Model loaded, but no animations found\n");
         }
 
+        if (!scene_standing->HasTextures()) {
+            printf("Model loaded, but no textures found\n");
+        }
+
         transform = scene_standing->mRootNode->mTransformation;
         globalInverseTransformation = inverse(aiMatrix4x4_to_mat4(transform));
 
         loadSceneData(scene_standing, state);
     }
+}
+
+void extractEmbeddedTextures(const string modelPath, const string& outputDirectory) {
+    scene_bind_pose = importerBindPose.ReadFile(
+        modelPath,
+        aiProcess_Triangulate |
+        aiProcess_GenSmoothNormals |
+        aiProcess_JoinIdenticalVertices
+    );
+
+    if (!scene_bind_pose->HasTextures()) {
+        cout << "[INFO] Nessuna texture embedded trovata nel modello.\n";
+        return;
+    }
+
+    for (unsigned int i = 0; i < scene_bind_pose->mNumTextures; ++i) {
+        const aiTexture* texture = scene_bind_pose->mTextures[i];
+
+        if (texture->mHeight == 0) {
+            // Texture compressa (PNG, JPG, ecc.)
+            string extension = texture->achFormatHint; // es: "png"
+            string fileName = outputDirectory + "/texture_embedded_" + to_string(i) + "." + extension;
+
+            ofstream fout(fileName, ios::binary);
+            fout.write(reinterpret_cast<const char*>(texture->pcData), texture->mWidth);
+            fout.close();
+
+            cout << "[OK] Salvata texture embedded in: " << fileName << endl;
+        }
+        else {
+            cout << "[WARN] Texture non compressa non gestita (RAW RGBA data)...\n";
+        }
+    }
+}
+
+vector<vec3> getModelBoundingVolume() {
+    if (positions.empty())
+        return {};
+
+    vec3 m = positions[0];
+    vec3 M = positions[0];
+
+    // Calcola min e max su tutte le coordinate
+    for (const auto& v : positions) {
+        m.x = std::min(m.x, v.x);
+        m.y = std::min(m.y, v.y);
+        m.z = std::min(m.z, v.z);
+
+        M.x = std::min(M.x, v.x);
+        M.y = std::min(M.y, v.y);
+        M.z = std::min(M.z, v.z);
+    }
+
+    // Crea e ritorna i 8 vertici del bounding box
+    vector<vec3> boundingBoxVertices(8);
+    boundingBoxVertices[0] = vec3(m.x, m.y, m.z);
+    boundingBoxVertices[1] = vec3(M.x, m.y, m.z);
+    boundingBoxVertices[2] = vec3(M.x, M.y, m.z);
+    boundingBoxVertices[3] = vec3(m.x, M.y, m.z);
+    boundingBoxVertices[4] = vec3(m.x, m.y, M.z);
+    boundingBoxVertices[5] = vec3(M.x, m.y, M.z);
+    boundingBoxVertices[6] = vec3(M.x, M.y, M.z);
+    boundingBoxVertices[7] = vec3(m.x, M.y, M.z);
+
+    return boundingBoxVertices;
+}
+
+vec3 getBoundingBoxBaseCenter() {
+    if (positions.empty())
+        return vec3(0.0f);
+
+    vec3 m = positions[0];
+    vec3 M = positions[0];
+
+    for (const auto& v : positions) {
+        m.x = std::min(m.x, v.x);
+        m.y = std::min(m.y, v.y);
+        m.z = std::min(m.z, v.z);
+
+        M.x = std::max(M.x, v.x);
+        M.y = std::max(M.y, v.y);
+        M.z = std::max(M.z, v.z);
+    }
+
+    // Calcola centro base (media dei 4 vertici con z minima)
+    vec3 baseCenter;
+    baseCenter.x = (m.x + M.x) / 2.0f;
+    baseCenter.y = (m.y + M.y) / 2.0f;
+    baseCenter.z = m.z;
+
+    return baseCenter;
 }

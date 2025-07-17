@@ -167,6 +167,7 @@
     <None Include="assimp-vc142-mtd.dll" />
     <None Include="fragment.glsl" />
     <None Include="fragment_model.glsl" />
+    <None Include="fragment_skybox.glsl" />
     <None Include="fragment_sphere.glsl" />
     <None Include="geometry.glsl" />
     <None Include="geometry_sphere.glsl" />
@@ -178,6 +179,7 @@
     <None Include="tess_eval_sphere.glsl" />
     <None Include="vertex.glsl" />
     <None Include="vertex_model.glsl" />
+    <None Include="vertex_skybox.glsl" />
     <None Include="vertex_sphere.glsl" />
   </ItemGroup>
   <ItemGroup>
