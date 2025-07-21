@@ -91,7 +91,7 @@ float FractalBrownianMotion(float x, float y, int numOctaves) {
 	return result;
 }
 
-GLuint generateFBMTexture(int width, int height, int numOctaves) {
+vector<float> generateFBMData(int width, int height, int numOctaves) {
 	vector<float> data(width * height);
 	float scale = 512.0f * 2.5;
 
@@ -104,22 +104,7 @@ GLuint generateFBMTexture(int width, int height, int numOctaves) {
 		}
 	}
 
-	textureData = data;
-
-	// Genera texture OpenGL
-	GLuint textureID;
-	glGenTextures(1, &textureID);
-	glBindTexture(GL_TEXTURE_2D, textureID);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_R32F, width, height, 0, GL_RED, GL_FLOAT, data.data());
-
-	// Impostazioni base
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-	return textureID;
+	return data;
 }
 
 float getHeightAt(float x, float z, float terrainSize, int texWidth, int texHeight) {

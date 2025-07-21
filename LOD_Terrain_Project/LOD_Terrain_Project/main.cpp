@@ -37,6 +37,8 @@ extern const aiScene* scene_standing;
 int main() {
     int division = 14;
     int numSpheres = 100;
+    int numOctaves = 8;
+    int terrainTextureSize = 512;
     float offset = 5.0f;
     float terrainSize = 20.0f;
     float r_min = 0.01f, r_max = 0.05f;
@@ -89,7 +91,7 @@ int main() {
     //MAPPA
     vector<float> planeVertices = simplePlane(division, terrainSize);
     vector<float> planePatches = generatePatches(planeVertices, division);
-    BufferPair planePair = INIT_PLANE_BUFFERS(planePatches);
+    BufferPair planePair = INIT_SIMPLE_VERTEX_BUFFERS(planePatches);
     GLuint tfBuffer = INIT_TRANSFORM_FEEDBACK_BUFFERS();
 
 
@@ -124,7 +126,7 @@ int main() {
 
     //SKYBOX
     vector<float> skyboxVertices = generateSkyboxCube();
-    BufferPair skyboxPair = INIT_SKYBOX_BUFFERS(skyboxVertices);
+    BufferPair skyboxPair = INIT_SIMPLE_VERTEX_BUFFERS(skyboxVertices);
 
 
     //SHADER PROGRAMS
@@ -159,7 +161,8 @@ int main() {
 
 
     //TEXTURES
-    GLuint fbmTexture = generateFBMTexture(512, 512, 8);
+    vector<float> fbmData = generateFBMData(terrainTextureSize, terrainTextureSize, numOctaves);
+    GLuint fbmTexture = createFloatTexture2D(terrainTextureSize, terrainTextureSize, fbmData);
     vector<GLuint> allTextures = loadAllTextures();
     GLuint modelTexture = loadSingleTexture("Model/Knight/textures/texture_embedded_0.png");
     GLuint skyboxTexture = loadSkybox();
@@ -251,7 +254,7 @@ int main() {
 
         float timeValue = glfwGetTime(); //Restituisce il tempo in secondi dall'avvio
 
-        glPatchParameteri(GL_PATCH_VERTICES, 3); //Dice a OpenGL che ogni patch ha 4 vertici
+        glPatchParameteri(GL_PATCH_VERTICES, 3); //Dice a OpenGL che ogni patch ha 3 vertici
 
         //SPHERE PROGRAM
         glUseProgram(sphereProgram);
