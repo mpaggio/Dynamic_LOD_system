@@ -14,11 +14,10 @@ uniform mat4 proj; //converte le coordinate da mondo 3D alla visione 2D (matrice
 void main() {
 
     vec4 center = (worldPos[0] + worldPos[1] + worldPos[2]) / 3.0; //Calcola il centro del triangolo
-    float strength = sin(u_time) * 0.2; //Fattore di animazione da -0.2 a 0.2
 
     for (int i = 0; i < 3; ++i) {
         vec4 offset = normalize(worldPos[i] - center);
-        vec4 newWorldPos = worldPos[i]; //+ offset * strength;
+        vec4 newWorldPos = worldPos[i];
 
         gl_Position = proj * view * newWorldPos; //Trasforma da coordinate 3D del mondo nelle coordinate di vista della telecamera e infine in coordinate in 2D
         gs_worldPos = newWorldPos;

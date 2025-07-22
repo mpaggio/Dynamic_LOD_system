@@ -181,6 +181,7 @@ int main() {
     int lightColorLocTerrain = glGetUniformLocation(terrainProgram, "light.color");
     int lightPowerLocTerrain = glGetUniformLocation(terrainProgram, "light.power");
     int cameraPositionLocation = glGetUniformLocation(terrainProgram, "cameraPosition");
+    int cameraDirectionLocation = glGetUniformLocation(terrainProgram, "cameraDirection");
     int characterPositionLocation = glGetUniformLocation(terrainProgram, "characterPosition");
     int useCharacterToTessLocation = glGetUniformLocation(terrainProgram, "useCharacterToTess");
     //Transform feedback program
@@ -413,6 +414,7 @@ int main() {
         glUniform1f(terrainSizeTCS, terrainSize);
         glUniform1f(terrainSizeTES, terrainSize);
         glUniform3fv(cameraPositionLocation, 1, value_ptr(SetupTelecamera.position));
+        glUniform3fv(cameraDirectionLocation, 1, value_ptr(SetupTelecamera.direction));
         glUniform3fv(characterPositionLocation, 1, value_ptr(modelWorldPos));
         glUniform3fv(cameraPosLocTerrain, 1, value_ptr(SetupTelecamera.position));
         glUniform3fv(lightPosLocTerrain, 1, value_ptr(light.position));

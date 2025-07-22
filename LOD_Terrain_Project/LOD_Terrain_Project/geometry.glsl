@@ -41,6 +41,7 @@ const float KELP_MAX_TERRAIN_HEIGHT = -0.6;
 uniform bool useCharacterToTess; //variabile di controllo sull'uso del punto di riferimento
 uniform float u_time; //tempo
 uniform vec3 cameraPosition; //posizione della telecamera
+uniform vec3 cameraDirection; //direzione della telecamera
 uniform vec3 characterPosition; //posizione del character
 uniform mat4 view; // Simula la camera
 uniform mat4 proj; // Matrice di proiezione
@@ -221,6 +222,19 @@ void generateKelps() {
 }
 
 void main() {
+    // Culling rispetto alla telecamera
+    vec3 normal = normalize(cross(
+        worldPos[1].xyz - worldPos[0].xyz,
+        worldPos[2].xyz - worldPos[0].xyz
+    ));
+    if (normal.y < 0.0) normal = -normal;
+
+    vec3 triCenter = (worldPos[0].xyz + worldPos[1].xyz + worldPos[2].xyz) / 3.0;
+    vec3 toCamera = normalize(cameraPosition - triCenter);
+
+    float visibility = dot(normal, toCamera); // Controllo visibilità (dot tra normale e direzione verso camera)
+    if (visibility < 0.0) return; // Triangolo rivolto via dalla camera
+
     // Disegna il triangolo del terreno
     for (int i = 0; i < 3; ++i) {
         gl_Position = proj * view * worldPos[i];

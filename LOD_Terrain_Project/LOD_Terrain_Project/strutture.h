@@ -84,13 +84,3 @@ typedef struct {
     vec3 color;
     GLfloat power;
 } pointLight;
-
-typedef struct {
-    GLuint light_position_pointer;
-    GLuint light_color_pointer;
-    GLuint light_power_pointer;
-    GLuint material_diffuse;
-    GLuint material_ambient;
-    GLuint material_specular;
-    GLuint material_shininess;
-} LightShaderUniform;
