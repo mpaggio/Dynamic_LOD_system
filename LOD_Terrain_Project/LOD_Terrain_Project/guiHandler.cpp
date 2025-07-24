@@ -5,6 +5,8 @@ extern bool mouseLocked;
 extern bool mainCharacter;
 extern float moveSpeed;
 
+//extern GLuint primitivesGenerated;
+
 extern pointLight light;
 
 void initializeGui(GLFWwindow* window) {
@@ -34,6 +36,7 @@ void renderGui() {
     ImGui::Text("Premi \"F\" per entrare in modalita' FILL.");
 
     ImGui::Text("FPS: %.1f", currentFPS);
+    //ImGui::Text("Primitive generate (GS): %d", primitivesGenerated);
 
     ImGui::Text("Current mode: %s", lineMode ? "LINE" : "FILL");
 

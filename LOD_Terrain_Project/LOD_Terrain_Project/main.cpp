@@ -11,6 +11,8 @@
 #include "geometryHandler.h"
 #include "interactionHandler.h"
 
+//GLuint primitivesGenerated = 0; //Numero di primitive generate
+
 int height = 600; //Altezza della finestra
 int width = 600; //Larghezza della finestra
 
@@ -421,8 +423,15 @@ int main() {
         glUniform3fv(lightColorLocTerrain, 1, value_ptr(light.color));
         glUniform1f(lightPowerLocTerrain, light.power);
 
+        //GLuint primitivesQuery = 0;
+        //glGenQueries(1, &primitivesQuery);
+        //glBeginQuery(GL_PRIMITIVES_GENERATED, primitivesQuery);
+
         glBindVertexArray(planePair.vao); //Attiva il VAO che contiene la configurazione dei vertici
         glDrawArrays(GL_PATCHES, 0, division * division * 4); //Disegna i vertici definiti nel VAO
+
+        //glEndQuery(GL_PRIMITIVES_GENERATED);
+        //glGetQueryObjectuiv(primitivesQuery, GL_QUERY_RESULT, &primitivesGenerated);
 
 
         //SKYBOX

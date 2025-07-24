@@ -5,7 +5,7 @@
 
 // --- LAYOUT --- //
 layout(triangles) in;
-layout(triangle_strip, max_vertices = 100) out; // aumentato per supportare più foglie
+layout(triangle_strip, max_vertices = 32) out; // aumentato per supportare più foglie
 
 
 // --- INPUT & OUTPUT --- //
